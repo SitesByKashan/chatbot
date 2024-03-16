@@ -1,17 +1,3 @@
-// Copyright 2021 Google LLC
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -140,6 +126,40 @@ class _ChatState extends State<Chat> {
     final responseStream =
         dialogflow.streamingDetectIntent(config, _audioStream);
     // TODO Get the transcript and detectedIntent and show on screen
+    responseStream.listen((data) {
+      //print('----');
+      setState(() {
+        //print(data);
+        String transcript = data.recognitionResult.transcript;
+        String queryText = data.queryResult.queryText;
+        String fulfillmentText = data.queryResult.fulfillmentText;
+
+        if (fulfillmentText.isNotEmpty) {
+          ChatMessage message = new ChatMessage(
+            text: queryText,
+            name: "You",
+            type: true,
+          );
+
+          ChatMessage botMessage = new ChatMessage(
+            text: fulfillmentText,
+            name: "Bot",
+            type: false,
+          );
+
+          _messages.insert(0, message);
+          _textController.clear();
+          _messages.insert(0, botMessage);
+        }
+        if (transcript.isNotEmpty) {
+          _textController.text = transcript;
+        }
+      });
+    }, onError: (e) {
+      //print(e);
+    }, onDone: () {
+      //print('done');
+    });
   }
 
   // The chat interface
@@ -205,43 +225,6 @@ class ChatMessage extends StatelessWidget {
   final String name;
   final bool type;
   // Get the transcript and detectedIntent and show on screen
-responseStream.listen((data) {
-  //print('----');
-  setState(() {
-    //print(data);
-    String transcript = data.recognitionResult.transcript;
-    String queryText = data.queryResult.queryText;
-    String fulfillmentText = data.queryResult.fulfillmentText;
-
-    if(fulfillmentText.isNotEmpty) {
-
-      ChatMessage message = new ChatMessage(
-        text: queryText,
-        name: "You",
-        type: true,
-      );
-
-      ChatMessage botMessage = new ChatMessage(
-        text: fulfillmentText,
-        name: "Bot",
-        type: false,
-      );
-
-      _messages.insert(0, message);
-      _textController.clear();
-      _messages.insert(0, botMessage);
-
-    }
-    if(transcript.isNotEmpty) {
-      _textController.text = transcript;
-    }
-
-  });
-},onError: (e){
-  //print(e);
-},onDone: () {
-  //print('done');
-});
 
   List<Widget> otherMessage(context) {
     return <Widget>[
